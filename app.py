@@ -118,7 +118,7 @@ with st.sidebar:
           input_language = "ja"
       
       out_lang = st.selectbox(
-          "Select your output language",
+          "Selecciona tu idioma de salida",
           ("Ingles", "Español", "Bengali", "koreano", "Mandarin", "Japones"),
       )
       if out_lang == "Ingles":
