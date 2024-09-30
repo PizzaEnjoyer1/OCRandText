@@ -121,10 +121,6 @@ if text.strip():
     }[english_accent]
     
     if st.sidebar.button("Convertir"):
-        # Mostrar GIF de carga en la sidebar
-        gif_placeholder = st.sidebar.empty()
-        gif_placeholder.image("path_to_your_loading.gif")  # Cambia esto a la ruta de tu GIF
-        
         with st.sidebar.spinner("Generando audio..."):
             result, output_text = text_to_speech(input_language, output_language, text, tld)
             audio_file = open(f"temp/{result}.mp3", "rb")
@@ -133,8 +129,5 @@ if text.strip():
             st.sidebar.audio(audio_bytes, format="audio/mp3", start_time=0)
             st.sidebar.markdown("## Texto de salida:")
             st.sidebar.write(output_text)
-        
-        # Eliminar el GIF de carga
-        gif_placeholder.empty()
 else:
     st.sidebar.warning("No se reconoció ningún texto. Repita el proceso.")
