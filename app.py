@@ -177,5 +177,8 @@ if text.strip():  # Asegurarse de que el texto no esté vacío
             # Mostrar automáticamente el texto de salida
             st.markdown(f"## Texto de salida:")
             st.write(f"{output_text}")
+
+        # Mostrar el GIF de carga al final de la barra lateral
+        loading_placeholder.image("dog.gif")
 else:
     warning_message.warning("No se ha reconocido texto aún.")
