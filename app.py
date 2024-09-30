@@ -106,6 +106,16 @@ if text:  # Solo mostrar los parámetros de traducción si se reconoce texto
         st.write(text)
         st.markdown(f"**Idioma detectado:** {lang_map.get(input_language, 'Desconocido')}")
 
+        # Establecer el idioma de entrada en función del idioma detectado
+        in_lang_name = lang_map.get(input_language, "Desconocido")
+        
+        # Seleccionar el idioma de entrada automáticamente
+        in_lang_options = list(lang_map.values())
+        in_lang_index = in_lang_options.index(in_lang_name) if in_lang_name in in_lang_options else 0
+
+        # Desplegable para el lenguaje de entrada
+        st.selectbox("Seleccione el lenguaje de entrada", in_lang_options, index=in_lang_index)
+
         out_lang = st.selectbox(
             "Selecciona tu idioma de salida",
             ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
