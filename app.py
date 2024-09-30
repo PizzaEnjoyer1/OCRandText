@@ -64,17 +64,7 @@ if bg_image is not None:
     
     if text.strip():  # Verifica que se haya reconocido algún texto
         detected_lang = translator.detect(text).lang
-        input_language = {
-            "en": "Inglés",
-            "es": "Español",
-            "bn": "Bengali",
-            "ko": "Coreano",
-            "zh-cn": "Mandarín",
-            "ja": "Japonés",
-            "fr": "Francés",
-            "de": "Alemán",
-            "pt": "Portugués"
-        }.get(detected_lang, "en")
+        input_language = detected_lang  # Cambia el idioma de entrada automáticamente
         st.sidebar.write(f"**El texto reconocido fue:** {text}")
         st.sidebar.write(f"**Idioma detectado:** {input_language}")
     else:
@@ -93,17 +83,7 @@ if img_file_buffer is not None:
 
     if text.strip():  # Verifica que se haya reconocido algún texto
         detected_lang = translator.detect(text).lang
-        input_language = {
-            "en": "Inglés",
-            "es": "Español",
-            "bn": "Bengali",
-            "ko": "Coreano",
-            "zh-cn": "Mandarín",
-            "ja": "Japonés",
-            "fr": "Francés",
-            "de": "Alemán",
-            "pt": "Portugués"
-        }.get(detected_lang, "en")
+        input_language = detected_lang  # Cambia el idioma de entrada automáticamente
         st.sidebar.write(f"**El texto reconocido fue:** {text}")
         st.sidebar.write(f"**Idioma detectado:** {input_language}")
     else:
@@ -119,6 +99,24 @@ with st.sidebar:
         except FileExistsError:
             pass
         
+        # Selección de idioma de entrada
+        in_lang = st.selectbox(
+            "Seleccione el lenguaje de entrada",
+            ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
+            index=["Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"].index(input_language) if input_language else 0
+        )
+        input_language = {
+            "Inglés": "en",
+            "Español": "es",
+            "Bengali": "bn",
+            "Coreano": "ko",
+            "Mandarín": "zh-cn",
+            "Japonés": "ja",
+            "Francés": "fr",
+            "Alemán": "de",
+            "Portugués": "pt",
+        }.get(in_lang, "en")
+
         out_lang = st.selectbox(
             "Selecciona tu idioma de salida",
             ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
