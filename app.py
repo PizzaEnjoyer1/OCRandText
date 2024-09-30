@@ -17,51 +17,40 @@ def text_to_speech(input_language, output_language, text, tld):
     translation = translator.translate(text, src=input_language, dest=output_language)
     trans_text = translation.text
     tts = gTTS(trans_text, lang=output_language, tld=tld, slow=False)
+    
     try:
         my_file_name = text[:20]
     except:
         my_file_name = "audio"
+        
     tts.save(f"temp/{my_file_name}.mp3")
     return my_file_name, trans_text
 
 def remove_files(n):
     mp3_files = glob.glob("temp/*mp3")
-    if mp3_files:
+    if len(mp3_files) != 0:
         now = time.time()
         n_days = n * 86400
         for f in mp3_files:
             if os.stat(f).st_mtime < now - n_days:
                 os.remove(f)
+                print("Deleted ", f)
 
 remove_files(7)
 
 st.title("Reconocimiento Óptico de Caracteres")
 st.subheader("Elige la fuente de la imagen, esta puede venir de la cámara o cargando un archivo")
 
-# Configuración de la cámara
 cam_ = st.checkbox("Usar Cámara")
-
-if cam_:
-    img_file_buffer = st.camera_input("Toma una Foto")
-else:
-    img_file_buffer = None
-
-with st.sidebar:
-    st.subheader("Texto Reconocido")
-    if text:
-        st.write(text)
-    else:
-        st.warning("No se reconoció ningún texto. Repita el proceso.")
-
+img_file_buffer = st.camera_input("Toma una Foto") if cam_ else None
 bg_image = st.file_uploader("Cargar Imagen:", type=["png", "jpg"])
+
 if bg_image is not None:
     uploaded_file = bg_image
     st.image(uploaded_file, caption='Imagen cargada.', use_column_width=True)
-
-    # Guardar la imagen en el sistema de archivos
     with open(uploaded_file.name, 'wb') as f:
         f.write(uploaded_file.read())
-
+    
     st.success(f"Imagen guardada como {uploaded_file.name}")
     img_cv = cv2.imread(f'{uploaded_file.name}')
     img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
@@ -71,105 +60,81 @@ if img_file_buffer is not None:
     bytes_data = img_file_buffer.getvalue()
     cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
 
+    if st.sidebar.radio("Filtro para imagen con cámara", ('Sí', 'No')) == 'Sí':
+        cv2_img = cv2.bitwise_not(cv2_img)
+        
     img_rgb = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
     text = pytesseract.image_to_string(img_rgb)
 
-# Solo muestra las opciones de traducción si se reconoce texto
-if text:
-    with st.sidebar:
-        st.subheader("Parámetros de traducción")
-
-        # Configuración automática del idioma de entrada
-        input_language_mapping = {
-            "en": "Inglés",
-            "es": "Español",
-            "bn": "Bengali",
-            "ko": "Coreano",
-            "zh-cn": "Mandarín",
-            "ja": "Japonés",
-            "fr": "Francés",
-            "de": "Alemán",
-            "pt": "Portugués"
-        }
-
-        # Asignar idioma de entrada basado en el texto reconocido
-        detected_language = pytesseract.image_to_string(img_rgb, lang='eng+spa+fra+deu+por+kor+ben+jpn+chi_sim')
-        detected_lang_code = 'es'  # Cambia este valor según lo que quieras asignar por defecto
-
-        for lang_code, lang_name in input_language_mapping.items():
-            if lang_name.lower() in detected_language.lower():
-                detected_lang_code = lang_code
-                break
+# Mostrar texto reconocido en la barra lateral
+if text.strip():
+    st.sidebar.write(f"Texto reconocido: {text}")
+    
+    # Parámetros de traducción
+    in_lang = st.sidebar.selectbox(
+        "Seleccione el lenguaje de entrada",
+        ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
+        index=0  # Ajusta el índice si es necesario
+    )
+    input_language = {
+        "Inglés": "en",
+        "Español": "es",
+        "Bengali": "bn",
+        "Coreano": "ko",
+        "Mandarín": "zh-cn",
+        "Japonés": "ja",
+        "Francés": "fr",
+        "Alemán": "de",
+        "Portugués": "pt"
+    }[in_lang]
+    
+    out_lang = st.sidebar.selectbox(
+        "Selecciona tu idioma de salida",
+        ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués")
+    )
+    output_language = {
+        "Inglés": "en",
+        "Español": "es",
+        "Bengali": "bn",
+        "Coreano": "ko",
+        "Mandarín": "zh-cn",
+        "Japonés": "ja",
+        "Francés": "fr",
+        "Alemán": "de",
+        "Portugués": "pt"
+    }[out_lang]
+    
+    english_accent = st.sidebar.selectbox(
+        "Seleccione el acento",
+        ("Default", "India", "United Kingdom", "United States", "Canada", "Australia", "Ireland", "South Africa")
+    )
+    
+    tld = {
+        "Default": "com",
+        "India": "co.in",
+        "United Kingdom": "co.uk",
+        "United States": "com",
+        "Canada": "ca",
+        "Australia": "com.au",
+        "Ireland": "ie",
+        "South Africa": "co.za"
+    }[english_accent]
+    
+    if st.sidebar.button("Convertir"):
+        # Mostrar GIF de carga en la sidebar
+        gif_placeholder = st.sidebar.empty()
+        gif_placeholder.image("path_to_your_loading.gif")  # Cambia esto a la ruta de tu GIF
         
-        in_lang = st.selectbox(
-            "Seleccione el lenguaje de entrada",
-            list(input_language_mapping.values()),
-            index=list(input_language_mapping.keys()).index(detected_lang_code)  # Establecer como seleccionado el idioma detectado
-        )
-
-        input_language = {
-            "Inglés": "en",
-            "Español": "es",
-            "Bengali": "bn",
-            "Coreano": "ko",
-            "Mandarín": "zh-cn",
-            "Japonés": "ja",
-            "Francés": "fr",
-            "Alemán": "de",
-            "Portugués": "pt"
-        }[in_lang]
-
-        out_lang = st.selectbox(
-            "Selecciona tu idioma de salida",
-            ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
-        )
-
-        output_language = {
-            "Inglés": "en",
-            "Español": "es",
-            "Bengali": "bn",
-            "Coreano": "ko",
-            "Mandarín": "zh-cn",
-            "Japonés": "ja",
-            "Francés": "fr",
-            "Alemán": "de",
-            "Portugués": "pt"
-        }[out_lang]
-
-        english_accent = st.selectbox(
-            "Seleccione el acento",
-            (
-                "Default",
-                "India",
-                "United Kingdom",
-                "United States",
-                "Canada",
-                "Australia",
-                "Ireland",
-                "South Africa",
-            ),
-        )
-
-        tld = {
-            "Default": "com",
-            "India": "co.in",
-            "United Kingdom": "co.uk",
-            "United States": "com",
-            "Canada": "ca",
-            "Australia": "com.au",
-            "Ireland": "ie",
-            "South Africa": "co.za",
-        }[english_accent]
-
-
-        if st.button("Convertir"):
-            with st.spinner("Generando audio..."):
-                result, output_text = text_to_speech(input_language, output_language, text, tld)
-                audio_file = open(f"temp/{result}.mp3", "rb")
-                audio_bytes = audio_file.read()
-                st.markdown(f"## Tu audio:")
-                st.audio(audio_bytes, format="audio/mp3", start_time=0)
-
-                if display_output_text:
-                    st.markdown(f"## Texto de salida:")
-                    st.write(f"{output_text}")
+        with st.sidebar.spinner("Generando audio..."):
+            result, output_text = text_to_speech(input_language, output_language, text, tld)
+            audio_file = open(f"temp/{result}.mp3", "rb")
+            audio_bytes = audio_file.read()
+            st.sidebar.markdown("## Tu audio:")
+            st.sidebar.audio(audio_bytes, format="audio/mp3", start_time=0)
+            st.sidebar.markdown("## Texto de salida:")
+            st.sidebar.write(output_text)
+        
+        # Eliminar el GIF de carga
+        gif_placeholder.empty()
+else:
+    st.sidebar.warning("No se reconoció ningún texto. Repita el proceso.")
