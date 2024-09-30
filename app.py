@@ -2,9 +2,9 @@ import streamlit as st
 import os
 import time
 import glob
+import cv2
 import numpy as np
 import pytesseract
-from PIL import Image
 from gtts import gTTS
 from googletrans import Translator
 
@@ -31,27 +31,22 @@ def remove_files(n):
         for f in mp3_files:
             if os.stat(f).st_mtime < now - n_days:
                 os.remove(f)
+                print("Deleted ", f)
 
 remove_files(7)
 
 st.title("Reconocimiento Óptico de Caracteres")
 st.subheader("Elige la fuente de la imagen, esta puede venir de la cámara o cargando un archivo")
 
-# Configuración de la cámara
 cam_ = st.checkbox("Usar Cámara")
+img_file_buffer = None
+
+with st.sidebar:
+    st.subheader("Procesamiento para Cámara")
+    filtro = st.radio("Filtro para imagen con cámara", ('Sí', 'No'))
 
 if cam_:
     img_file_buffer = st.camera_input("Toma una Foto")
-else:
-    img_file_buffer = None
-
-# Barra lateral para texto reconocido
-with st.sidebar:
-    st.subheader("Texto Reconocido")
-    if text:
-        st.write(text)
-    else:
-        st.warning("No se reconoció ningún texto. Repita el proceso.")
 
 bg_image = st.file_uploader("Cargar Imagen:", type=["png", "jpg"])
 if bg_image is not None:
@@ -63,19 +58,37 @@ if bg_image is not None:
         f.write(uploaded_file.read())
 
     st.success(f"Imagen guardada como {uploaded_file.name}")
-    img_rgb = Image.open(uploaded_file)
+    img_cv = cv2.imread(uploaded_file.name)
+    img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
     text = pytesseract.image_to_string(img_rgb)
+    st.write(text)
 
 if img_file_buffer is not None:
     bytes_data = img_file_buffer.getvalue()
-    img_rgb = Image.open(bytes_data)
-    text = pytesseract.image_to_string(img_rgb)
+    cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
 
-# Solo muestra las opciones de traducción si se reconoce texto
-if text:
-    # Cambiar el idioma de entrada al reconocido
-    input_language = 'en'  # Por defecto
-    for lang, code in {
+    # Aplicar filtro si está habilitado
+    if filtro == 'Sí':
+        cv2_img = cv2.bitwise_not(cv2_img)  # Invertir colores como ejemplo de filtro
+
+    img_rgb = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
+    text = pytesseract.image_to_string(img_rgb)
+    st.write(text)
+
+# Sidebar para parámetros de traducción
+with st.sidebar:
+    st.subheader("Parámetros de traducción")
+    
+    try:
+        os.mkdir("temp")
+    except FileExistsError:
+        pass
+    
+    in_lang = st.selectbox(
+        "Seleccione el lenguaje de entrada",
+        ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
+    )
+    input_language = {
         "Inglés": "en",
         "Español": "es",
         "Bengali": "bn",
@@ -84,72 +97,62 @@ if text:
         "Japonés": "ja",
         "Francés": "fr",
         "Alemán": "de",
-        "Portugués": "pt"
-    }.items():
-        if lang in text:
-            input_language = code
-            break
+        "Portugués": "pt",
+    }.get(in_lang, "en")
 
-    with st.sidebar:
-        st.subheader("Parámetros de traducción")
+    out_lang = st.selectbox(
+        "Selecciona tu idioma de salida",
+        ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
+    )
+    output_language = {
+        "Inglés": "en",
+        "Español": "es",
+        "Bengali": "bn",
+        "Coreano": "ko",
+        "Mandarín": "zh-cn",
+        "Japonés": "ja",
+        "Francés": "fr",
+        "Alemán": "de",
+        "Portugués": "pt",
+    }.get(out_lang, "en")
 
-        # Opciones de idiomas
-        out_lang = st.selectbox(
-            "Selecciona tu idioma de salida",
-            ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
-        )
+    english_accent = st.selectbox(
+        "Seleccione el acento",
+        (
+            "Default",
+            "India",
+            "United Kingdom",
+            "United States",
+            "Canada",
+            "Australia",
+            "Ireland",
+            "South Africa",
+        ),
+    )
+    
+    tld = {
+        "Default": "com",
+        "India": "co.in",
+        "United Kingdom": "co.uk",
+        "United States": "com",
+        "Canada": "ca",
+        "Australia": "com.au",
+        "Ireland": "ie",
+        "South Africa": "co.za",
+    }.get(english_accent, "com")
 
-        output_language = {
-            "Inglés": "en",
-            "Español": "es",
-            "Bengali": "bn",
-            "Coreano": "ko",
-            "Mandarín": "zh-cn",
-            "Japonés": "ja",
-            "Francés": "fr",
-            "Alemán": "de",
-            "Portugués": "pt"
-        }[out_lang]
+    display_output_text = st.checkbox("Mostrar texto")
 
-        english_accent = st.selectbox(
-            "Seleccione el acento",
-            (
-                "Default",
-                "India",
-                "United Kingdom",
-                "United States",
-                "Canada",
-                "Australia",
-                "Ireland",
-                "South Africa",
-            ),
-        )
+    if st.button("Convertir"):
+        if text:
+            result, output_text = text_to_speech(input_language, output_language, text, tld)
+            audio_file = open(f"temp/{result}.mp3", "rb")
+            audio_bytes = audio_file.read()
+            st.markdown(f"## Tu audio:")
+            st.audio(audio_bytes, format="audio/mp3", start_time=0)
 
-        tld = {
-            "Default": "com",
-            "India": "co.in",
-            "United Kingdom": "co.uk",
-            "United States": "com",
-            "Canada": "ca",
-            "Australia": "com.au",
-            "Ireland": "ie",
-            "South Africa": "co.za",
-        }[english_accent]
-
-        display_output_text = st.checkbox("Mostrar texto")
-        
-        # Opción de filtro
-        filtro = st.checkbox("Aplicar filtro a la imagen", value=False)
-
-        if st.button("Convertir"):
-            with st.spinner("Generando audio..."):
-                result, output_text = text_to_speech(input_language, output_language, text, tld)
-                audio_file = open(f"temp/{result}.mp3", "rb")
-                audio_bytes = audio_file.read()
-                st.markdown(f"## Tu audio:")
-                st.audio(audio_bytes, format="audio/mp3", start_time=0)
-
-                if display_output_text:
-                    st.markdown(f"## Texto de salida:")
-                    st.write(f"{output_text}")
-
+            if display_output_text:
+                st.markdown(f"## Texto de salida:")
+                st.write(f"{output_text}")
+        else:
+            st.warning("No hay texto para convertir.")
