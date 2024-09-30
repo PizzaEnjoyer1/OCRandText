@@ -75,8 +75,8 @@ if img_file_buffer is not None:
     text = pytesseract.image_to_string(img_rgb)
     st.write(text)
 
-# Sidebar para parámetros de traducción
-if text:  # Solo mostrar los parámetros de traducción si se reconoce texto
+# Solo mostrar los parámetros de traducción si se ha reconocido texto
+if text.strip():  # Asegurarse de que el texto no esté vacío
     detected_language = translator.detect(text).lang  # Detectar el idioma del texto
     with st.sidebar:
         st.subheader("Parámetros de traducción")
