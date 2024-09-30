@@ -70,7 +70,7 @@ if bg_image is not None:
 if img_file_buffer is not None:
     bytes_data = img_file_buffer.getvalue()
     cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
-    
+
     img_rgb = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
     text = pytesseract.image_to_string(img_rgb)
 
@@ -78,13 +78,35 @@ if img_file_buffer is not None:
 if text:
     with st.sidebar:
         st.subheader("Parámetros de traducción")
+
+        # Configuración automática del idioma de entrada
+        input_language_mapping = {
+            "en": "Inglés",
+            "es": "Español",
+            "bn": "Bengali",
+            "ko": "Coreano",
+            "zh-cn": "Mandarín",
+            "ja": "Japonés",
+            "fr": "Francés",
+            "de": "Alemán",
+            "pt": "Portugués"
+        }
+
+        # Asignar idioma de entrada basado en el texto reconocido
+        detected_language = pytesseract.image_to_string(img_rgb, lang='eng+spa+fra+deu+por+kor+ben+jpn+chi_sim')
+        detected_lang_code = 'es'  # Cambia este valor según lo que quieras asignar por defecto
+
+        for lang_code, lang_name in input_language_mapping.items():
+            if lang_name.lower() in detected_language.lower():
+                detected_lang_code = lang_code
+                break
         
-        # Opciones de idiomas
         in_lang = st.selectbox(
             "Seleccione el lenguaje de entrada",
-            ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
+            list(input_language_mapping.values()),
+            index=list(input_language_mapping.keys()).index(detected_lang_code)  # Establecer como seleccionado el idioma detectado
         )
-        
+
         input_language = {
             "Inglés": "en",
             "Español": "es",
@@ -96,12 +118,12 @@ if text:
             "Alemán": "de",
             "Portugués": "pt"
         }[in_lang]
-        
+
         out_lang = st.selectbox(
             "Selecciona tu idioma de salida",
             ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
         )
-        
+
         output_language = {
             "Inglés": "en",
             "Español": "es",
@@ -113,7 +135,7 @@ if text:
             "Alemán": "de",
             "Portugués": "pt"
         }[out_lang]
-        
+
         english_accent = st.selectbox(
             "Seleccione el acento",
             (
@@ -139,7 +161,6 @@ if text:
             "South Africa": "co.za",
         }[english_accent]
 
-        display_output_text = st.checkbox("Mostrar texto")
 
         if st.button("Convertir"):
             with st.spinner("Generando audio..."):
