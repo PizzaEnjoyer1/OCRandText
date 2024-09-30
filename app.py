@@ -2,14 +2,11 @@ import streamlit as st
 import os
 import time
 import glob
-import os
-import cv2
 import numpy as np
 import pytesseract
 from PIL import Image
 from gtts import gTTS
 from googletrans import Translator
-
 
 # Configuración inicial
 text = ""
@@ -48,6 +45,7 @@ if cam_:
 else:
     img_file_buffer = None
 
+# Barra lateral para texto reconocido
 with st.sidebar:
     st.subheader("Texto Reconocido")
     if text:
@@ -65,45 +63,42 @@ if bg_image is not None:
         f.write(uploaded_file.read())
 
     st.success(f"Imagen guardada como {uploaded_file.name}")
-    img_cv = cv2.imread(f'{uploaded_file.name}')
-    img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
+    img_rgb = Image.open(uploaded_file)
     text = pytesseract.image_to_string(img_rgb)
 
 if img_file_buffer is not None:
     bytes_data = img_file_buffer.getvalue()
-    cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
-    
-    img_rgb = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
+    img_rgb = Image.open(bytes_data)
     text = pytesseract.image_to_string(img_rgb)
 
 # Solo muestra las opciones de traducción si se reconoce texto
 if text:
+    # Cambiar el idioma de entrada al reconocido
+    input_language = 'en'  # Por defecto
+    for lang, code in {
+        "Inglés": "en",
+        "Español": "es",
+        "Bengali": "bn",
+        "Coreano": "ko",
+        "Mandarín": "zh-cn",
+        "Japonés": "ja",
+        "Francés": "fr",
+        "Alemán": "de",
+        "Portugués": "pt"
+    }.items():
+        if lang in text:
+            input_language = code
+            break
+
     with st.sidebar:
         st.subheader("Parámetros de traducción")
-        
+
         # Opciones de idiomas
-        in_lang = st.selectbox(
-            "Seleccione el lenguaje de entrada",
-            ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
-        )
-        
-        input_language = {
-            "Inglés": "en",
-            "Español": "es",
-            "Bengali": "bn",
-            "Coreano": "ko",
-            "Mandarín": "zh-cn",
-            "Japonés": "ja",
-            "Francés": "fr",
-            "Alemán": "de",
-            "Portugués": "pt"
-        }[in_lang]
-        
         out_lang = st.selectbox(
             "Selecciona tu idioma de salida",
             ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
         )
-        
+
         output_language = {
             "Inglés": "en",
             "Español": "es",
@@ -115,7 +110,7 @@ if text:
             "Alemán": "de",
             "Portugués": "pt"
         }[out_lang]
-        
+
         english_accent = st.selectbox(
             "Seleccione el acento",
             (
@@ -142,6 +137,9 @@ if text:
         }[english_accent]
 
         display_output_text = st.checkbox("Mostrar texto")
+        
+        # Opción de filtro
+        filtro = st.checkbox("Aplicar filtro a la imagen", value=False)
 
         if st.button("Convertir"):
             with st.spinner("Generando audio..."):
@@ -154,3 +152,4 @@ if text:
                 if display_output_text:
                     st.markdown(f"## Texto de salida:")
                     st.write(f"{output_text}")
+
