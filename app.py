@@ -41,10 +41,6 @@ st.subheader("Elige la fuente de la imagen, esta puede venir de la cámara o car
 cam_ = st.checkbox("Usar Cámara")
 img_file_buffer = None
 
-# Advertencia inicial que se mostrará si no hay texto reconocido
-warning_message = st.empty()
-loading_placeholder = st.sidebar.empty()  # Marcador de posición para el GIF de carga
-
 with st.sidebar:
     st.subheader("Procesamiento para Cámara")
     filtro = st.radio("Filtro para imagen con cámara", ('Sí', 'No'))
@@ -65,6 +61,24 @@ if bg_image is not None:
     img_cv = cv2.imread(uploaded_file.name)
     img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
     text = pytesseract.image_to_string(img_rgb)
+    
+    if text.strip():  # Verifica que se haya reconocido algún texto
+        detected_lang = translator.detect(text).lang
+        input_language = {
+            "en": "Inglés",
+            "es": "Español",
+            "bn": "Bengali",
+            "ko": "Coreano",
+            "zh-cn": "Mandarín",
+            "ja": "Japonés",
+            "fr": "Francés",
+            "de": "Alemán",
+            "pt": "Portugués"
+        }.get(detected_lang, "en")
+        st.sidebar.write(f"**El texto reconocido fue:** {text}")
+        st.sidebar.write(f"**Idioma detectado:** {input_language}")
+    else:
+        st.warning("No se reconoció texto en la imagen.")
 
 if img_file_buffer is not None:
     bytes_data = img_file_buffer.getvalue()
@@ -77,23 +91,9 @@ if img_file_buffer is not None:
     img_rgb = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
     text = pytesseract.image_to_string(img_rgb)
 
-# Solo mostrar los parámetros de traducción si se ha reconocido texto
-if text.strip():  # Asegurarse de que el texto no esté vacío
-    detected_language = translator.detect(text).lang  # Detectar el idioma del texto
-    warning_message.empty()  # Limpiar el mensaje de advertencia
-    with st.sidebar:
-        st.subheader("Parámetros de traducción")
-        
-        try:
-            os.mkdir("temp")
-        except FileExistsError:
-            pass
-
-        # Cambiar automáticamente el lenguaje de entrada
-        input_language = detected_language
-
-        # Mostrar el idioma detectado
-        lang_map = {
+    if text.strip():  # Verifica que se haya reconocido algún texto
+        detected_lang = translator.detect(text).lang
+        input_language = {
             "en": "Inglés",
             "es": "Español",
             "bn": "Bengali",
@@ -103,22 +103,22 @@ if text.strip():  # Asegurarse de que el texto no esté vacío
             "fr": "Francés",
             "de": "Alemán",
             "pt": "Portugués"
-        }
+        }.get(detected_lang, "en")
+        st.sidebar.write(f"**El texto reconocido fue:** {text}")
+        st.sidebar.write(f"**Idioma detectado:** {input_language}")
+    else:
+        st.warning("No se reconoció texto en la imagen.")
 
-        st.markdown(f"### El texto reconocido fue:")
-        st.write(text)
-        st.markdown(f"**Idioma detectado:** {lang_map.get(input_language, 'Desconocido')}")
-
-        # Establecer el idioma de entrada en función del idioma detectado
-        in_lang_name = lang_map.get(input_language, "Desconocido")
+# Sidebar para parámetros de traducción
+with st.sidebar:
+    if text.strip():  # Mostrar parámetros solo si se reconoció texto
+        st.subheader("Parámetros de traducción")
         
-        # Seleccionar el idioma de entrada automáticamente
-        in_lang_options = list(lang_map.values())
-        in_lang_index = in_lang_options.index(in_lang_name) if in_lang_name in in_lang_options else 0
-
-        # Desplegable para el lenguaje de entrada
-        st.selectbox("Seleccione el lenguaje de entrada", in_lang_options, index=in_lang_index)
-
+        try:
+            os.mkdir("temp")
+        except FileExistsError:
+            pass
+        
         out_lang = st.selectbox(
             "Selecciona tu idioma de salida",
             ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
@@ -160,20 +160,23 @@ if text.strip():  # Asegurarse de que el texto no esté vacío
             "South Africa": "co.za",
         }.get(english_accent, "com")
 
+        # GIF de carga
+        gif_placeholder = st.empty()
+        loading_gif = gif_placeholder.image("loading.gif", use_column_width=True, caption="Generando audio...", format="auto")
+
         if st.button("Convertir"):
-            loading_placeholder.image("dog.gif")  # Mostrar el GIF de carga
-            
-            result, output_text = text_to_speech(input_language, output_language, text, tld)
-            audio_file = open(f"temp/{result}.mp3", "rb")
-            audio_bytes = audio_file.read()
-            st.markdown(f"## Tu audio:")
-            st.audio(audio_bytes, format="audio/mp3", start_time=0)
+            with st.spinner("Generando audio..."):
+                result, output_text = text_to_speech(input_language, output_language, text, tld)
+                audio_file = open(f"temp/{result}.mp3", "rb")
+                audio_bytes = audio_file.read()
+                st.markdown(f"## Tu audio:")
+                st.audio(audio_bytes, format="audio/mp3", start_time=0)
+                
+                # Eliminar GIF de carga
+                gif_placeholder.empty()
 
-            # Limpiar el GIF de carga después de que se genera el audio
-            loading_placeholder.empty()
-
-            # Mostrar automáticamente el texto de salida
+            # Mostrar el texto generado
             st.markdown(f"## Texto de salida:")
             st.write(f"{output_text}")
-else:
-    warning_message.warning("No se ha reconocido texto aún.")
+    else:
+        st.warning("No hay texto para convertir.")
