@@ -41,6 +41,9 @@ st.subheader("Elige la fuente de la imagen, esta puede venir de la cámara o car
 cam_ = st.checkbox("Usar Cámara")
 img_file_buffer = None
 
+# Advertencia inicial que se mostrará si no hay texto reconocido
+warning_message = st.empty()
+
 with st.sidebar:
     st.subheader("Procesamiento para Cámara")
     filtro = st.radio("Filtro para imagen con cámara", ('Sí', 'No'))
@@ -61,7 +64,6 @@ if bg_image is not None:
     img_cv = cv2.imread(uploaded_file.name)
     img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
     text = pytesseract.image_to_string(img_rgb)
-    st.write(text)
 
 if img_file_buffer is not None:
     bytes_data = img_file_buffer.getvalue()
@@ -73,11 +75,11 @@ if img_file_buffer is not None:
 
     img_rgb = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
     text = pytesseract.image_to_string(img_rgb)
-    st.write(text)
 
 # Solo mostrar los parámetros de traducción si se ha reconocido texto
 if text.strip():  # Asegurarse de que el texto no esté vacío
     detected_language = translator.detect(text).lang  # Detectar el idioma del texto
+    warning_message.empty()  # Limpiar el mensaje de advertencia
     with st.sidebar:
         st.subheader("Parámetros de traducción")
         
@@ -168,4 +170,4 @@ if text.strip():  # Asegurarse de que el texto no esté vacío
             st.markdown(f"## Texto de salida:")
             st.write(f"{output_text}")
 else:
-    st.warning("No se ha reconocido texto aún.")
+    warning_message.warning("No se ha reconocido texto aún.")
