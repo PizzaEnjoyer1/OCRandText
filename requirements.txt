@@ -7,6 +7,6 @@ numpy
 opencv-python-headless
 pytesseract
 Pillow
-opencv-python
+
 
 
