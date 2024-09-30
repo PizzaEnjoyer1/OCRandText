@@ -96,13 +96,14 @@ if text.strip():  # Asegurarse de que el texto no esté vacío
         lang_map = {
             "en": "Inglés",
             "es": "Español",
-            "bn": "Bengali",
+            "bn": "Bengalí",
             "ko": "Coreano",
             "zh-cn": "Mandarín",
             "ja": "Japonés",
             "fr": "Francés",
             "de": "Alemán",
-            "pt": "Portugués"
+            "pt": "Portugués",
+            "ru": "Ruso"  # Agregar ruso
         }
 
         st.markdown(f"### El texto reconocido fue:")
@@ -121,18 +122,19 @@ if text.strip():  # Asegurarse de que el texto no esté vacío
 
         out_lang = st.selectbox(
             "Selecciona tu idioma de salida",
-            ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
+            ("Inglés", "Español", "Bengalí", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués", "Ruso"),  # Agregar ruso
         )
         output_language = {
             "Inglés": "en",
             "Español": "es",
-            "Bengali": "bn",
+            "Bengalí": "bn",
             "Coreano": "ko",
             "Mandarín": "zh-cn",
             "Japonés": "ja",
             "Francés": "fr",
             "Alemán": "de",
             "Portugués": "pt",
+            "Ruso": "ru"  # Agregar ruso
         }.get(out_lang, "en")
 
         english_accent = st.selectbox(
