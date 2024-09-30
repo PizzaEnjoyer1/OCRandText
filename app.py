@@ -77,6 +77,7 @@ if img_file_buffer is not None:
 
 # Sidebar para parámetros de traducción
 if text:  # Solo mostrar los parámetros de traducción si se reconoce texto
+    detected_language = translator.detect(text).lang  # Detectar el idioma del texto
     with st.sidebar:
         st.subheader("Parámetros de traducción")
         
@@ -84,22 +85,26 @@ if text:  # Solo mostrar los parámetros de traducción si se reconoce texto
             os.mkdir("temp")
         except FileExistsError:
             pass
-        
-        in_lang = st.selectbox(
-            "Seleccione el lenguaje de entrada",
-            ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
-        )
-        input_language = {
-            "Inglés": "en",
-            "Español": "es",
-            "Bengali": "bn",
-            "Coreano": "ko",
-            "Mandarín": "zh-cn",
-            "Japonés": "ja",
-            "Francés": "fr",
-            "Alemán": "de",
-            "Portugués": "pt",
-        }.get(in_lang, "en")
+
+        # Cambiar automáticamente el lenguaje de entrada
+        input_language = detected_language
+
+        # Mostrar el idioma detectado
+        lang_map = {
+            "en": "Inglés",
+            "es": "Español",
+            "bn": "Bengali",
+            "ko": "Coreano",
+            "zh-cn": "Mandarín",
+            "ja": "Japonés",
+            "fr": "Francés",
+            "de": "Alemán",
+            "pt": "Portugués"
+        }
+
+        st.markdown(f"### El texto reconocido fue:")
+        st.write(text)
+        st.markdown(f"**Idioma detectado:** {lang_map.get(input_language, 'Desconocido')}")
 
         out_lang = st.selectbox(
             "Selecciona tu idioma de salida",
@@ -143,9 +148,6 @@ if text:  # Solo mostrar los parámetros de traducción si se reconoce texto
         }.get(english_accent, "com")
 
         display_output_text = st.checkbox("Mostrar texto")
-
-        st.markdown(f"### El texto reconocido fue:")
-        st.write(text)
 
         if st.button("Convertir"):
             result, output_text = text_to_speech(input_language, output_language, text, tld)
