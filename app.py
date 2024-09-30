@@ -157,7 +157,6 @@ if text:  # Solo mostrar los parámetros de traducción si se reconoce texto
             "South Africa": "co.za",
         }.get(english_accent, "com")
 
-
         if st.button("Convertir"):
             result, output_text = text_to_speech(input_language, output_language, text, tld)
             audio_file = open(f"temp/{result}.mp3", "rb")
@@ -165,8 +164,8 @@ if text:  # Solo mostrar los parámetros de traducción si se reconoce texto
             st.markdown(f"## Tu audio:")
             st.audio(audio_bytes, format="audio/mp3", start_time=0)
 
-            if display_output_text:
-                st.markdown(f"## Texto de salida:")
-                st.write(f"{output_text}")
+            # Mostrar automáticamente el texto de salida
+            st.markdown(f"## Texto de salida:")
+            st.write(f"{output_text}")
 else:
     st.warning("No se ha reconocido texto aún.")
