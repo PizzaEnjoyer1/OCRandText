@@ -121,13 +121,13 @@ if text.strip():
     }[english_accent]
     
     if st.sidebar.button("Convertir"):
-        with st.sidebar.spinner("Generando audio..."):
+        with st.spinner("Generando audio..."):
             result, output_text = text_to_speech(input_language, output_language, text, tld)
             audio_file = open(f"temp/{result}.mp3", "rb")
             audio_bytes = audio_file.read()
-            st.sidebar.markdown("## Tu audio:")
-            st.sidebar.audio(audio_bytes, format="audio/mp3", start_time=0)
-            st.sidebar.markdown("## Texto de salida:")
-            st.sidebar.write(output_text)
+            st.markdown("## Tu audio:")
+            st.audio(audio_bytes, format="audio/mp3", start_time=0)
+            st.markdown("## Texto de salida:")
+            st.write(output_text)
 else:
     st.sidebar.warning("No se reconoció ningún texto. Repita el proceso.")
