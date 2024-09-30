@@ -1,13 +1,15 @@
+import streamlit as st
 import os
 import time
 import glob
+import os
 import cv2
 import numpy as np
 import pytesseract
 from PIL import Image
 from gtts import gTTS
 from googletrans import Translator
-import streamlit as st
+
 
 # Configuración inicial
 text = ""
