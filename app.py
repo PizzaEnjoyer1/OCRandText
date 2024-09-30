@@ -136,7 +136,7 @@ if text.strip():  # Asegurarse de que el texto no esté vacío
         }.get(out_lang, "en")
 
         english_accent = st.selectbox(
-            "Seleccione el acento",
+            "Seleccione el acento (solo aplica para inglés; no afecta el audio en otros idiomas)",
             (
                 "Default",
                 "India",
