@@ -43,6 +43,7 @@ img_file_buffer = None
 
 # Advertencia inicial que se mostrará si no hay texto reconocido
 warning_message = st.empty()
+loading_placeholder = st.sidebar.empty()  # Marcador de posición para el GIF de carga
 
 with st.sidebar:
     st.subheader("Procesamiento para Cámara")
@@ -160,11 +161,16 @@ if text.strip():  # Asegurarse de que el texto no esté vacío
         }.get(english_accent, "com")
 
         if st.button("Convertir"):
+            loading_placeholder.image("dog.gif")  # Mostrar el GIF de carga
+            
             result, output_text = text_to_speech(input_language, output_language, text, tld)
             audio_file = open(f"temp/{result}.mp3", "rb")
             audio_bytes = audio_file.read()
             st.markdown(f"## Tu audio:")
             st.audio(audio_bytes, format="audio/mp3", start_time=0)
+
+            # Limpiar el GIF de carga después de que se genera el audio
+            loading_placeholder.empty()
 
             # Mostrar automáticamente el texto de salida
             st.markdown(f"## Texto de salida:")
