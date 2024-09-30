@@ -1,24 +1,20 @@
-import streamlit as st
 import os
 import time
 import glob
-import cv2
-import numpy as np
 import pytesseract
 from PIL import Image
+import streamlit as st
 from gtts import gTTS
 from googletrans import Translator
 
-text = ""
+# Inicializar texto
+text = " "
 
 def text_to_speech(input_language, output_language, text, tld):
     translation = translator.translate(text, src=input_language, dest=output_language)
     trans_text = translation.text
     tts = gTTS(trans_text, lang=output_language, tld=tld, slow=False)
-    try:
-        my_file_name = text[0:20]
-    except:
-        my_file_name = "audio"
+    my_file_name = text[0:20] if text else "audio"
     tts.save(f"temp/{my_file_name}.mp3")
     return my_file_name, trans_text
 
@@ -30,12 +26,11 @@ def remove_files(n):
         for f in mp3_files:
             if os.stat(f).st_mtime < now - n_days:
                 os.remove(f)
-                print("Deleted ", f)
 
 remove_files(7)
 
 st.title("Reconocimiento Óptico de Caracteres")
-st.subheader("Elige la fuente de la imágen, esta puede venir de la cámara o cargando un archivo")
+st.subheader("Elige la fuente de la imagen, esta puede venir de la cámara o cargando un archivo")
 
 cam_ = st.checkbox("Usar Cámara")
 
@@ -46,119 +41,112 @@ else:
 
 bg_image = st.file_uploader("Cargar Imagen:", type=["png", "jpg"])
 if bg_image is not None:
-    uploaded_file = bg_image
-    st.image(uploaded_file, caption='Imagen cargada.', use_column_width=True)
+    st.image(bg_image, caption='Imagen cargada.', use_column_width=True)
+    with open(bg_image.name, 'wb') as f:
+        f.write(bg_image.read())
 
-    # Guardar la imagen en el sistema de archivos
-    with open(uploaded_file.name, 'wb') as f:
-        f.write(uploaded_file.read())
-
-    st.success(f"Imagen guardada como {uploaded_file.name}")
-    img_cv = cv2.imread(f'{uploaded_file.name}')
-    img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
-    text = pytesseract.image_to_string(img_rgb)
+    img_pil = Image.open(bg_image)
+    text = pytesseract.image_to_string(img_pil)
+else:
+    text = ""
 
 if img_file_buffer is not None:
-    # To read image file buffer with OpenCV:
     bytes_data = img_file_buffer.getvalue()
-    cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+    img_pil = Image.open(bytes_data)
+    text = pytesseract.image_to_string(img_pil)
 
-    img_rgb = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
-    text = pytesseract.image_to_string(img_rgb)
+# Mostrar el texto reconocido
+if text.strip():
+    st.sidebar.write(text)
+else:
+    st.sidebar.warning("No se reconoció ningún texto. Repita el proceso.")
 
-# Sidebar for displaying recognized text and translation parameters
 with st.sidebar:
-    st.subheader("Texto Reconocido")
-    if text.strip():
-        st.write(text)
-        st.subheader("Parámetros de Traducción")
+    st.subheader("Parámetros de traducción")
+    try:
+        os.mkdir("temp")
+    except:
+        pass
+    
+    translator = Translator()
+    
+    in_lang = st.selectbox(
+        "Seleccione el lenguaje de entrada",
+        ("Inglés", "Español", "Bengali", "Koreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués")
+    )
+    
+    input_language = {
+        "Inglés": "en",
+        "Español": "es",
+        "Bengali": "bn",
+        "Koreano": "ko",
+        "Mandarín": "zh-cn",
+        "Japonés": "ja",
+        "Francés": "fr",
+        "Alemán": "de",
+        "Portugués": "pt"
+    }.get(in_lang)
 
-        try:
-            os.mkdir("temp")
-        except:
-            pass
+    out_lang = st.selectbox(
+        "Selecciona tu idioma de salida",
+        ("Inglés", "Español", "Bengali", "Koreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués")
+    )
+    
+    output_language = {
+        "Inglés": "en",
+        "Español": "es",
+        "Bengali": "bn",
+        "Koreano": "ko",
+        "Mandarín": "zh-cn",
+        "Japonés": "ja",
+        "Francés": "fr",
+        "Alemán": "de",
+        "Portugués": "pt"
+    }.get(out_lang)
 
-        translator = Translator()
-
-        # Language selection
-        in_lang = st.selectbox(
-            "Seleccione el lenguaje de entrada",
-            ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
+    english_accent = st.selectbox(
+        "Seleccione el acento",
+        (
+            "Default",
+            "India",
+            "United Kingdom",
+            "United States",
+            "Canada",
+            "Australia",
+            "Ireland",
+            "South Africa",
         )
-        input_language = {
-            "Inglés": "en",
-            "Español": "es",
-            "Bengali": "bn",
-            "Coreano": "ko",
-            "Mandarín": "zh-cn",
-            "Japonés": "ja",
-            "Francés": "fr",
-            "Alemán": "de",
-            "Portugués": "pt"
-        }[in_lang]
+    )
 
-        out_lang = st.selectbox(
-            "Selecciona tu idioma de salida",
-            ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
-        )
-        output_language = {
-            "Inglés": "en",
-            "Español": "es",
-            "Bengali": "bn",
-            "Coreano": "ko",
-            "Mandarín": "zh-cn",
-            "Japonés": "ja",
-            "Francés": "fr",
-            "Alemán": "de",
-            "Portugués": "pt"
-        }[out_lang]
+    tld = {
+        "Default": "com",
+        "India": "co.in",
+        "United Kingdom": "co.uk",
+        "United States": "com",
+        "Canada": "ca",
+        "Australia": "com.au",
+        "Ireland": "ie",
+        "South Africa": "co.za"
+    }.get(english_accent)
 
-        english_accent = st.selectbox(
-            "Seleccione el acento",
-            (
-                "Default",
-                "India",
-                "Reino Unido",
-                "Estados Unidos",
-                "Canadá",
-                "Australia",
-                "Irlanda",
-                "Sudáfrica",
-            ),
-        )
+    display_output_text = st.checkbox("Mostrar texto")
 
-        tld = {
-            "Default": "com",
-            "India": "co.in",
-            "Reino Unido": "co.uk",
-            "Estados Unidos": "com",
-            "Canadá": "ca",
-            "Australia": "com.au",
-            "Irlanda": "ie",
-            "Sudáfrica": "co.za"
-        }[english_accent]
+    if text.strip() and st.button("convertir"):
+        # Mostrar el GIF de carga
+        gif_placeholder = st.sidebar.empty()
+        gif_placeholder.image("path/to/loading.gif", caption="Generando audio...", use_column_width=True)
 
-        display_output_text = st.checkbox("Mostrar texto")
+        result, output_text = text_to_speech(input_language, output_language, text, tld)
+        
+        audio_file = open(f"temp/{result}.mp3", "rb")
+        audio_bytes = audio_file.read()
+        st.markdown(f"## Tu audio:")
+        st.audio(audio_bytes, format="audio/mp3", start_time=0)
 
-        if st.button("Generar Audio"):
-            if text.strip():
-                gif_placeholder = st.empty()  # Placeholder for GIF
-                with gif_placeholder.container():
-                    st.image("dog.gif")  # Reemplaza con la ruta a tu GIF
+        if display_output_text:
+            st.markdown(f"## Texto de salida:")
+            st.write(f"{output_text}")
 
-                with st.spinner("Generando audio..."):
-                    result, output_text = text_to_speech(input_language, output_language, text, tld)
-                    audio_file = open(f"temp/{result}.mp3", "rb")
-                    audio_bytes = audio_file.read()
-                    st.markdown(f"## Tu audio:")
-                    st.audio(audio_bytes, format="audio/mp3", start_time=0)
+        # Limpiar el GIF una vez que se genera el audio
+        gif_placeholder.empty()
 
-                    if display_output_text:
-                        st.markdown(f"## Texto de salida:")
-                        st.write(f" {output_text}")
-
-                gif_placeholder.empty()  # Remove the GIF after audio generation
-            else:
-                st.error("No se reconoció ningún texto. Repita el proceso.")
-    else:
-        st.warning("No se reconoció ningún texto. Repita el proceso.")
