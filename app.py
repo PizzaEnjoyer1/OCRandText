@@ -157,7 +157,6 @@ if text:  # Solo mostrar los parámetros de traducción si se reconoce texto
             "South Africa": "co.za",
         }.get(english_accent, "com")
 
-        display_output_text = st.checkbox("Mostrar texto")
 
         if st.button("Convertir"):
             result, output_text = text_to_speech(input_language, output_language, text, tld)
