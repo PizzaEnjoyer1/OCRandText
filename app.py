@@ -89,7 +89,7 @@ if img_file_buffer is not None:
     text=pytesseract.image_to_string(img_rgb) 
     st.write(text) 
 
-with st.sidebar:
+
       st.subheader("Parámetros de traducción")
       
       try:
