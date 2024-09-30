@@ -7,7 +7,6 @@ numpy
 opencv-python-headless
 pytesseract
 Pillow
-mesa-libGL
 
 
 
