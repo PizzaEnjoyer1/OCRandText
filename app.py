@@ -161,7 +161,7 @@ if text.strip():  # Asegurarse de que el texto no esté vacío
         }.get(english_accent, "com")
 
         if st.button("Convertir"):
-            loading_placeholder.image("loading.gif")  # Mostrar el GIF de carga
+            loading_placeholder.image("dog.gif")  # Mostrar el GIF de carga
             
             result, output_text = text_to_speech(input_language, output_language, text, tld)
             audio_file = open(f"temp/{result}.mp3", "rb")
