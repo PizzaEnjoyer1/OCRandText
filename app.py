@@ -76,75 +76,78 @@ if img_file_buffer is not None:
     st.write(text)
 
 # Sidebar para parámetros de traducción
-with st.sidebar:
-    st.subheader("Parámetros de traducción")
-    
-    try:
-        os.mkdir("temp")
-    except FileExistsError:
-        pass
-    
-    in_lang = st.selectbox(
-        "Seleccione el lenguaje de entrada",
-        ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
-    )
-    input_language = {
-        "Inglés": "en",
-        "Español": "es",
-        "Bengali": "bn",
-        "Coreano": "ko",
-        "Mandarín": "zh-cn",
-        "Japonés": "ja",
-        "Francés": "fr",
-        "Alemán": "de",
-        "Portugués": "pt",
-    }.get(in_lang, "en")
+if text:  # Solo mostrar los parámetros de traducción si se reconoce texto
+    with st.sidebar:
+        st.subheader("Parámetros de traducción")
+        
+        try:
+            os.mkdir("temp")
+        except FileExistsError:
+            pass
+        
+        in_lang = st.selectbox(
+            "Seleccione el lenguaje de entrada",
+            ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
+        )
+        input_language = {
+            "Inglés": "en",
+            "Español": "es",
+            "Bengali": "bn",
+            "Coreano": "ko",
+            "Mandarín": "zh-cn",
+            "Japonés": "ja",
+            "Francés": "fr",
+            "Alemán": "de",
+            "Portugués": "pt",
+        }.get(in_lang, "en")
 
-    out_lang = st.selectbox(
-        "Selecciona tu idioma de salida",
-        ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
-    )
-    output_language = {
-        "Inglés": "en",
-        "Español": "es",
-        "Bengali": "bn",
-        "Coreano": "ko",
-        "Mandarín": "zh-cn",
-        "Japonés": "ja",
-        "Francés": "fr",
-        "Alemán": "de",
-        "Portugués": "pt",
-    }.get(out_lang, "en")
+        out_lang = st.selectbox(
+            "Selecciona tu idioma de salida",
+            ("Inglés", "Español", "Bengali", "Coreano", "Mandarín", "Japonés", "Francés", "Alemán", "Portugués"),
+        )
+        output_language = {
+            "Inglés": "en",
+            "Español": "es",
+            "Bengali": "bn",
+            "Coreano": "ko",
+            "Mandarín": "zh-cn",
+            "Japonés": "ja",
+            "Francés": "fr",
+            "Alemán": "de",
+            "Portugués": "pt",
+        }.get(out_lang, "en")
 
-    english_accent = st.selectbox(
-        "Seleccione el acento",
-        (
-            "Default",
-            "India",
-            "United Kingdom",
-            "United States",
-            "Canada",
-            "Australia",
-            "Ireland",
-            "South Africa",
-        ),
-    )
-    
-    tld = {
-        "Default": "com",
-        "India": "co.in",
-        "United Kingdom": "co.uk",
-        "United States": "com",
-        "Canada": "ca",
-        "Australia": "com.au",
-        "Ireland": "ie",
-        "South Africa": "co.za",
-    }.get(english_accent, "com")
+        english_accent = st.selectbox(
+            "Seleccione el acento",
+            (
+                "Default",
+                "India",
+                "United Kingdom",
+                "United States",
+                "Canada",
+                "Australia",
+                "Ireland",
+                "South Africa",
+            ),
+        )
+        
+        tld = {
+            "Default": "com",
+            "India": "co.in",
+            "United Kingdom": "co.uk",
+            "United States": "com",
+            "Canada": "ca",
+            "Australia": "com.au",
+            "Ireland": "ie",
+            "South Africa": "co.za",
+        }.get(english_accent, "com")
 
-    display_output_text = st.checkbox("Mostrar texto")
+        display_output_text = st.checkbox("Mostrar texto")
 
-    if st.button("Convertir"):
-        if text:
+        st.markdown(f"### El texto reconocido fue:")
+        st.write(text)
+
+        if st.button("Convertir"):
             result, output_text = text_to_speech(input_language, output_language, text, tld)
             audio_file = open(f"temp/{result}.mp3", "rb")
             audio_bytes = audio_file.read()
@@ -154,5 +157,5 @@ with st.sidebar:
             if display_output_text:
                 st.markdown(f"## Texto de salida:")
                 st.write(f"{output_text}")
-        else:
-            st.warning("No hay texto para convertir.")
+else:
+    st.warning("No se ha reconocido texto aún.")
